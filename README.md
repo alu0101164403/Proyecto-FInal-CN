@@ -37,6 +37,6 @@ Ejecucion proyecto:
 
 - iniciar kafka producer: python3 ./scripts/kafka_producer.py
 
-- ejecutar proyecto: spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 spark_consumer.py
+- ejecutar spark: spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 spark_consumer.py
 
-python3 app.py
+- ejecutar app: python3 app.py
