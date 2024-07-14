@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supermarket Sales Dashboard</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Supermarket Sales Dashboard</h1>
+    <div>
+        <h2>Top Selling Products</h2>
+        <canvas id="topSellingProductsChart"></canvas>
+    </div>
+    <div>
+        <h2>Low Stock Products</h2>
+        <canvas id="lowStockProductsChart"></canvas>
+    </div>
+
+    <script>
+        var socket = io();
+
+        var topSellingProductsChart = new Chart(document.getElementById('topSellingProductsChart'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Top Selling Products',
+                    data: [],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        var lowStockProductsChart = new Chart(document.getElementById('lowStockProductsChart'), {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Low Stock Products',
+                    data: [],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        socket.on('top_selling_products', function(data) {
+            var labels = [];
+            var values = [];
+            data.forEach(function(item) {
+                labels.push(item.product_name);
+                values.push(parseInt(item['sum(quantity)']));
+            });
+
+            topSellingProductsChart.data.labels = labels;
+            topSellingProductsChart.data.datasets[0].data = values;
+            topSellingProductsChart.update();
+        });
+
+        socket.on('low_stock_products', function(data) {
+            var labels = [];
+            var values = [];
+            data.forEach(function(item) {
+                labels.push(item.product_name);
+                values.push(parseInt(item['sum(quantity)']));
+            });
+
+            lowStockProductsChart.data.labels = labels;
+            lowStockProductsChart.data.datasets[0].data = values;
+            lowStockProductsChart.update();
+        });
+    </script>
+</body>
+</html>
