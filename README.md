@@ -27,11 +27,11 @@ Version Kafka:
 
 
 
-Ejecucion proyecto:
+Ejecucion proyecto en maquina mestro:
 
-- iniciar zookeper: bin/zookeeper-server-start.sh config/zookeeper.properties
+- iniciar zookeper: cd ~/config/kafka/kafka_2.13-2.8.0  y luego     bin/zookeeper-server-start.sh config/zookeeper.properties
 
-- iniciar kafka: bin/kafka-server-start.sh config/server.properties
+- iniciar kafka: cd ~/config/kafka/kafka_2.13-2.8.0     y luego     bin/kafka-server-start.sh config/server.properties
 
 - inicar api: python3 api_simulation.py
 

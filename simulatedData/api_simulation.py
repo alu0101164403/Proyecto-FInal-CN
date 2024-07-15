@@ -10,15 +10,14 @@ prices = [1.0, 0.5, 0.8, 1.5, 0.2, 2.0, 1.2, 3.0, 2.5, 1.5]
 @app.route('/sales', methods=['GET'])
 def get_sales_data():
     sales_data = []
-    for _ in range(random.randint(5, 15)):
+    for _ in range(random.randint(15, 500)):
         product = random.choice(products)
-        quantity = random.randint(1, 5)
+        quantity = random.randint(5, 30)
         price = prices[products.index(product)]
         sales_data.append({
             "product": product,
             "quantity": quantity,
-            "price": price,
-            "timestamp": time.time()
+            "price": price
         })
     return jsonify(sales_data)
 

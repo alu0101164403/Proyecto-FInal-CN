@@ -1,7 +1,6 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType
-
+from pyspark.sql.functions import from_json, col, window
+from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 
 # Crear una sesión de Spark
 spark = SparkSession.builder \
@@ -10,11 +9,10 @@ spark = SparkSession.builder \
 
 # Definir el esquema de los datos
 schema = StructType([
-    StructField("product_id", StringType(), True),
-    StructField("product_name", StringType(), True),
+    StructField("product", StringType(), True),
     StructField("quantity", IntegerType(), True),
     StructField("price", IntegerType(), True),
-    StructField("timestamp", StringType(), True),
+    StructField("timestamp", TimestampType(), True)
 ])
 
 # Leer datos de Kafka
@@ -26,40 +24,29 @@ df = spark.readStream \
 
 # Convertir el valor de los datos de Kafka a JSON y aplicarle el esquema
 sales_df = df.selectExpr("CAST(value AS STRING)") \
-    .select(from_json(col("value"), schema).alias("data")) \
-    .select("data.*")
+          .select(from_json(col("value"), schema).alias("data")) \
+          .select("data.product", "data.quantity", "data.price", col("data.timestamp").alias("timestamp"))
 
 # Calcular los productos más vendidos
-top_selling_products = sales_df \
-    .groupBy("product_name") \
+top_selling_products_per_batch = sales_df \
+    .withWatermark("timestamp", "10 minutes") \
+    .groupBy("product", window("timestamp", "1 hour")) \
     .sum("quantity") \
-    .orderBy(col("sum(quantity)").desc()) \
-    .limit(10)
+    .select("product", "window.start", "window.end", "sum(quantity)")
 
 # Guardar los productos más vendidos en HDFS en formato CSV
-query_top_selling = top_selling_products.writeStream \
-    .outputMode("Append") \
-    .format("console") \
+query_top_selling = top_selling_products_per_batch.writeStream \
+    .format("csv") \
+    .option("checkpointLocation", "/tmp/top_selling_checkpoint") \
     .option("path", "hdfs://10.6.129.98:9000/user/username/top_selling_products") \
-    .option("checkpointLocation", "hdfs://10.6.129.98:9000/user/username/checkpoint_top_selling_products") \
+    .option("append", True) \
     .start()
 
-# Calcular productos con existencias bajas
-low_stock_products = sales_df \
-    .groupBy("product_name") \
-    .sum("quantity") \
-    .filter(col("sum(quantity)") < 10) \
-    .orderBy(col("sum(quantity)").asc())
-
-# Guardar los productos con existencias bajas en HDFS en formato CSV
-query_low_stock = low_stock_products.writeStream \
-    .outputMode("Append") \
+# Mostrar los datos procesados en la consola
+query_console = top_selling_products_per_batch.writeStream \
+    .outputMode("append") \
     .format("console") \
-    .option("path", "hdfs://10.6.129.98:9000/user/username/low_stock_products") \
-    .option("checkpointLocation", "hdfs://10.6.129.98:9000/user/username/checkpoint_low_stock_products") \
     .start()
 
-    
 # Iniciar el streaming y esperar a que termine
 query_top_selling.awaitTermination()
-query_low_stock.awaitTermination()

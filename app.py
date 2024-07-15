@@ -5,7 +5,7 @@ import csv
 import time
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")  # Permitir conexiones desde todos los orígenes
 
 @app.route('/')
 def index():
@@ -20,16 +20,17 @@ def read_csv_file(file_path):
     return data
 
 def emit_data():
-    while True:
-        if os.path.exists('hdfs://10.6.129.98:9000/user/username/top_selling_products/part-00000'):
-            top_selling_products = read_csv_file('hdfs://10.6.129.98:9000/user/username/top_selling_products/part-00000')
+    try:
+        while True:
+            top_selling_products = []
+            if os.path.exists('hdfs:///10.6.129.98:9000/user/username/top_selling_products/part-00000-4c9d81de-016c-4db3-bea1-523c2210c608-c000.csv'):
+                top_selling_products = read_csv_file('hdfs:///10.6.129.98:9000/user/username/top_selling_products/part-00000-4c9d81de-016c-4db3-bea1-523c2210c608-c000.csv')
+
             socketio.emit('top_selling_products', top_selling_products)
 
-        if os.path.exists('hdfs://10.6.129.98:9000/user/username/low_stock_products/part-00000'):
-            low_stock_products = read_csv_file('hdfs://10.6.129.98:9000/user/username/low_stock_products/part-00000')
-            socketio.emit('low_stock_products', low_stock_products)
-        
-        time.sleep(10)
+            time.sleep(10)
+    except Exception as e:
+        print(f"Error en emit_data: {str(e)}")
 
 @socketio.on('connect')
 def handle_connect():
@@ -37,5 +38,3 @@ def handle_connect():
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5001, debug=True)
-
-

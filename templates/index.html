@@ -11,14 +11,10 @@
         <h2>Top Selling Products</h2>
         <canvas id="topSellingProductsChart"></canvas>
     </div>
-    <div>
-        <h2>Low Stock Products</h2>
-        <canvas id="lowStockProductsChart"></canvas>
-    </div>
 
     <script>
         var socket = io();
-
+    
         var topSellingProductsChart = new Chart(document.getElementById('topSellingProductsChart'), {
             type: 'bar',
             data: {
@@ -39,28 +35,7 @@
                 }
             }
         });
-
-        var lowStockProductsChart = new Chart(document.getElementById('lowStockProductsChart'), {
-            type: 'bar',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Low Stock Products',
-                    data: [],
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
+    
         socket.on('top_selling_products', function(data) {
             var labels = [];
             var values = [];
@@ -68,24 +43,13 @@
                 labels.push(item.product_name);
                 values.push(parseInt(item['sum(quantity)']));
             });
-
+    
             topSellingProductsChart.data.labels = labels;
             topSellingProductsChart.data.datasets[0].data = values;
             topSellingProductsChart.update();
         });
-
-        socket.on('low_stock_products', function(data) {
-            var labels = [];
-            var values = [];
-            data.forEach(function(item) {
-                labels.push(item.product_name);
-                values.push(parseInt(item['sum(quantity)']));
-            });
-
-            lowStockProductsChart.data.labels = labels;
-            lowStockProductsChart.data.datasets[0].data = values;
-            lowStockProductsChart.update();
-        });
+    
     </script>
+    
 </body>
 </html>
